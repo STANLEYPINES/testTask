@@ -1,4 +1,4 @@
-import React, { Fragment, Component } from 'react';
+import React, { Component } from 'react';
 import './App.css';
 import Button from './components/Button';
 import Log from './components/Log';
@@ -22,6 +22,7 @@ class App extends Component {
       log: '',
       stack,
       step: 0,
+      running: false,
     };
     this.baseState = this.state;
   }
@@ -34,25 +35,26 @@ class App extends Component {
   
   writeLog = (taskObj) => {
     const { name, timeout, startStamp } = taskObj;
-    const logMessage = `${timestamp(TIMESTAMP_FORMAT)}: ${name} was pressed with ${Math.floor(timeout/1000)}s timeout ${startStamp}`;
+    const logMessage = `${timestamp(TIMESTAMP_FORMAT)}: ${name} was pressed with ${Math.floor(timeout/1000)}s timeout at ${startStamp}`;
     this.setState({
       log: `${this.state.log}
       
-      ${logMessage}`})
+            ${logMessage}`})
   }
 
   runTask = (taskObj) => {
-    setTimeout(()=> {
+    if (this.state.running) {
       this.writeLog(taskObj);
       this.setState({ step: this.state.step + 1 });
       if (this.hasContinue()) this.run(this.state.step);
       else this.setState({running: false});
-    }, taskObj.timeout);
+    }
   }
 
   run = (step) => {
+    const task = this.state.stack[step];
     if (!this.state.running) this.setState({running: true});
-    this.runTask(this.state.stack[step]);
+    setTimeout(() => this.runTask(task), task.timeout);
   }
 
   fillTaskInfo(name) {
@@ -69,11 +71,11 @@ class App extends Component {
     stack.push(obj);
     this.setState({ stack });
     if (!this.state.running) this.run(this.state.step)
-    console.log(name, stack);
   }
 
   resetApp = () => {
     this.setState(this.baseState);
+    stack = [];
   }
   
   render() {
